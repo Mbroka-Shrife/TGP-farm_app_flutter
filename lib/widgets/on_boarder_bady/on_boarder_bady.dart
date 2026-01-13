@@ -34,7 +34,7 @@ class _OnBoarderBadyState extends State<OnBoarderBady> {
         Positioned(
           left: 0,
           right: 0,
-          bottom: SizeConfig.defaultSize! * 22,
+          bottom: SizeConfig.defaultSize! * 25,
           child: DotsIndicator(
             dotsCount: 3,
             position:(pageController?.hasClients ?? false) 
@@ -54,7 +54,7 @@ class _OnBoarderBadyState extends State<OnBoarderBady> {
                   ? (pageController!.page! < 1.5) 
                   : true,
           child: Positioned(
-            top: SizeConfig.defaultSize! * 10,
+            top: SizeConfig.defaultSize! * 18,
             right: 32,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

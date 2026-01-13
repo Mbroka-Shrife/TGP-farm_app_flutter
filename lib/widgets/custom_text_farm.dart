@@ -6,21 +6,23 @@ class CustomFormField extends StatelessWidget {
   final IconData? suffixIcon;
   final bool isPassword;
   final TextInputType? inputType;
+  final TextEditingController? controller;
 
   const CustomFormField({
     super.key, 
     required this.hintText, 
     this.suffixIcon, 
     this.isPassword = false, 
-    this.inputType
+    this.inputType,
+    this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      controller: controller, 
       obscureText: isPassword,
       keyboardType: inputType,
-      // هذا الجزء يضمن أنه إذا كان الكيبورد رقمي، لا يقبل الحقل إلا أرقام فقط
       inputFormatters: inputType == TextInputType.number || inputType == TextInputType.phone
           ? [FilteringTextInputFormatter.digitsOnly]
           : null,

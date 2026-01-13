@@ -13,9 +13,9 @@ class PageViewItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return  Column(
       children: [
-        const VerticalSpace(18),
+        const VerticalSpace(22),
         SizedBox(
-          height: SizeConfig.defaultSize! * 20,
+          height: SizeConfig.defaultSize! * 25,
          child:  Image.asset(image!),
         ),
         const VerticalSpace(3),
@@ -28,7 +28,7 @@ class PageViewItem extends StatelessWidget {
           ),
           textAlign: TextAlign.left,
         ),
-        const VerticalSpace(1.5),
+        const VerticalSpace(2),
         Text(
           supTitle!,
           style: TextStyle(

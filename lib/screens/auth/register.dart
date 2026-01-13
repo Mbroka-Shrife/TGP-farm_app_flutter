@@ -1,8 +1,12 @@
 import 'package:farm_app/helpers/constants.dart';
+import 'package:farm_app/helpers/consts.dart';
 import 'package:farm_app/helpers/space_widget.dart';
-import 'package:farm_app/helpers/widgets/custom_general_buttom.dart'; 
+import 'package:farm_app/helpers/widgets/custom_general_buttom.dart';
+import 'package:farm_app/providers/register_provider.dart';
 import 'package:farm_app/widgets/custom_text_farm.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,13 +16,41 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  // متغير لتحديد نوع الحساب: true مزارع ، false متجر
   bool isFarmer = true;
+
+  final TextEditingController nameController = TextEditingController(
+    text: kDebugMode ? "SAEE" : "",
+  );
+  final TextEditingController emailController = TextEditingController(
+    text: kDebugMode ? "saee@mail.com" : "",
+  );
+  final TextEditingController phoneController = TextEditingController(
+    text: kDebugMode ? "0921234567" : "",
+  );
+  final TextEditingController addressController = TextEditingController(
+    text: kDebugMode ? "Benghazi" : "",);
+  final TextEditingController passwordController = TextEditingController(
+    text: kDebugMode ? "12345678" : "",);
+  final TextEditingController businessNameController = TextEditingController(
+    text: kDebugMode ? "Orgname" : "",);
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+    passwordController.dispose();
+    businessNameController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final regProvider = Provider.of<RegisterProvider>(context);
+
     return Scaffold(
-       resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: SingleChildScrollView(
@@ -35,8 +67,8 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               ),
               const VerticalSpace(3),
-              
-              // أزرار الاختيار بين مزارع ومتجر
+
+              // اختيار نوع المستخدم
               Row(
                 children: [
                   Expanded(
@@ -72,7 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         child: Center(
                           child: Text(
-                            "Store",
+                            "Customer",
                             style: TextStyle(
                               color: !isFarmer ? Colors.white : Colors.black,
                               fontWeight: FontWeight.bold,
@@ -87,81 +119,131 @@ class _RegisterPageState extends State<RegisterPage> {
 
               const VerticalSpace(4),
 
-              // الحقول المشتركة للاثنين
-              const CustomFormField(
-                hintText: 'Full Name', 
+              CustomFormField(
+                controller: nameController,
+                hintText: 'Full Name',
                 suffixIcon: Icons.person,
               ),
               const VerticalSpace(2),
-              const CustomFormField(
-                hintText: 'Email', 
-                suffixIcon: Icons.email, 
-                inputType: TextInputType.emailAddress,
+              CustomFormField(
+                controller: emailController,
+                hintText: 'Email',
+                suffixIcon: Icons.email,
               ),
               const VerticalSpace(2),
-              const CustomFormField(
-                hintText: 'Phone Number', 
-                suffixIcon: Icons.phone, 
-                inputType: TextInputType.phone,
+              CustomFormField(
+                controller: phoneController,
+                hintText: 'Phone Number',
+                suffixIcon: Icons.phone,
               ),
-              const VerticalSpace(2),// حقول تظهر بناءً على نوع المستخدم (مزارع أو متجر)
+              const VerticalSpace(2),
               if (isFarmer) ...[
-                const CustomFormField(hintText: 'Farm Name', suffixIcon: Icons.agriculture),
+                CustomFormField(
+                  controller: businessNameController,
+                  hintText: 'Farm Name',
+                  suffixIcon: Icons.agriculture,
+                ),
                 const VerticalSpace(2),
-                const CustomFormField(hintText: 'Farm Location', suffixIcon: Icons.location_on),
+                CustomFormField(
+                  controller: addressController,
+                  hintText: 'Farm Location',
+                  suffixIcon: Icons.location_on,
+                ),
               ] else ...[
-                const CustomFormField(hintText: 'Store Name', suffixIcon: Icons.store),
-                const VerticalSpace(2),
-                const CustomFormField(hintText: 'Store Location', suffixIcon: Icons.location_city),
+                CustomFormField(
+                  controller: addressController,
+                  hintText: 'Your Address',
+                  suffixIcon: Icons.location_city,
+                ),
               ],
 
               const VerticalSpace(2),
-              const CustomFormField(
-                hintText: 'Password', 
-                suffixIcon: Icons.lock, 
+              CustomFormField(
+                controller: passwordController,
+                hintText: 'Password',
+                suffixIcon: Icons.lock,
                 isPassword: true,
               ),
-              
+
               const VerticalSpace(5),
 
-              // زر التسجيل
               CustomGeneralButtom(
-                text: 'Register',
-                onTap: () {
-                  // سيتم الربط مع Laravel API هنا
+                text: regProvider.isLoading ? 'Processing...' : 'Register',
+                onTap: () async {
+                  // إصلاح الشروط بإضافة ||
+                  if (emailController.text.isEmpty ||
+                      passwordController.text.isEmpty ||
+                      nameController.text.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Please fill all required fields"),
+                      ),
+                    );
+                    return;
+                  }
+
+                  List result; // استقبال النتيجة كـ List من الـ Provider
+
+                  if (isFarmer) {
+                    result = await regProvider.registerFarmer({
+                      'name': nameController.text.trim(),
+                      'email': emailController.text.trim(),
+                      'password': passwordController.text,
+                      'phone': phoneController.text,
+                      'address': addressController.text,
+                      'business_name': businessNameController.text,
+                      'has_delivery': "1", // تحويل القيمة لنص لتجنب أخطاء النوع
+                    });
+                  } else {
+                    result = await regProvider.registerCustomer({
+                      'name': nameController.text.trim(),
+                      'email': emailController.text.trim(),
+                      'password': passwordController.text.toString(),
+                      'phone': phoneController.text.toString(),
+                      'address': addressController.text,
+                    });
+                  }
+
+                  // معالجة النتيجة بناءً على أول عنصر في القائمة (true/false)
+                  if (result[0] == true) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result[1]),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    Navigator.pop(context); // العودة لصفحة الـ Login
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(result[1]),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 },
               ),
-              
-              const VerticalSpace(2),
 
-              // زر العودة لصفحة تسجيل الدخول (Login)
+              const VerticalSpace(2),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
                     "Already have an account? ",
-                    style: TextStyle(
-                      fontFamily: 'Poppins',
-                      color: Color(0xff78787c),
-                    ),
+                    style: TextStyle(color: Color(0xff78787c)),
                   ),
                   GestureDetector(
-                    onTap: () {
-                      // الرجوع للخلف لصفحة الـ Login
-                      Navigator.pop(context);
-                    },
+                    onTap: () => Navigator.pop(context),
                     child: const Text(
                       "Login",
                       style: TextStyle(
                         color: kMainColor,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins',
                       ),
                     ),
                   ),
                 ],
               ),
-              
               const VerticalSpace(3),
             ],
           ),
